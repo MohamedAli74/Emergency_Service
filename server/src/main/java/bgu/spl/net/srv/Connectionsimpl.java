@@ -141,6 +141,5 @@ public class Connectionsimpl<T>
     public StompServer getStompServer() 
     {
         return stompServer;
-    }
-    
+    }
 }
