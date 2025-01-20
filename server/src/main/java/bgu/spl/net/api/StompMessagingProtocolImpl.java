@@ -25,8 +25,8 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
         if(message.getStompCommand()=="DISCONNECT"){
             shouldTerminate=true;
             String response = connections.disconnect(ownersConnectionID);//should be boolean ?
-        if(!response.equals("true")){//TO DO:to handle the errors
-            sendError(message, 0, response, message.getHeaders()[0][1]);
+        if(!response.equals("true")){
+            sendError(message, response, message.getHeaders()[0][1]);
         }else{
             sendReceipt(message.getHeaders()[0][1]);
         
@@ -34,7 +34,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
     }
         if(message.getStompCommand() == "UNSUBSCRIBE"){
             String receipt=null;
-            int id;
+            int id=-1;
             for(String[] header : message.getHeaders()){
                 if(header[0] == "receipt")receipt = header[1];
                 if(header[0] == "id")id = Integer.parseInt(header[1]);  
@@ -46,8 +46,8 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
             if(receipt!=null && response.equals("true"))sendReceipt(receipt);
         }
         if(message.getStompCommand() == "SUBSCRIBE"){
-            String destination , receipt;
-            int id;
+            String destination = null , receipt = null;
+            int id=-1;
             for(String[] header : message.getHeaders()){
                 if(header[0] == "receipt")receipt = header[1];
                 if(header[0] == "id")id = Integer.parseInt(message.getHeaders()[0][1]);
@@ -62,8 +62,8 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
         }
     }
         if(message.getStompCommand() == "SEND"){
-            String destination;
-            String receipt;
+            String destination=null;
+            String receipt=null;
             for(String[] header : message.getHeaders()){
                 if(header[0] == "receipt")receipt = header[1];
                 if(header[0] == "destination")destination = header[1];
@@ -81,7 +81,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
             String passCode = null ;
             String host = null ;
             String acceptVersion = null;
-            String receipt;
+            String receipt = null;
 
             for(String[] header : message.getHeaders()){
                 if(header[0] == "accept-version")acceptVersion = header[1];
