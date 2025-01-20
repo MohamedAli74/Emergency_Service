@@ -1,12 +1,13 @@
 package bgu.spl.net.srv;
 import bgu.spl.net.impl.stomp.*;
 import java.util.concurrent.ConcurrentHashMap;
-public class Connectionsimpl<T>
+public class Connectionsimpl<T> implements Connections<T>
 {
     ConcurrentHashMap<String, Integer> uniqueIdByName = new ConcurrentHashMap<>();
     ConcurrentHashMap<Integer, String> nameByUniqueId = new ConcurrentHashMap<>();
     ConcurrentHashMap<Integer, ConnectionHandler<T>> handelrsById = new ConcurrentHashMap<>();
     StompServer stompServer;
+    int messageID = 0;
     int id = 0;
 
     public Connectionsimpl(StompServer stompServer)
@@ -15,23 +16,54 @@ public class Connectionsimpl<T>
         this.id = 0;
     }
 
-    public int connect(String acceptVersion,String host,String name,String passCode,ConnectionHandler<T> connectionHandler)
+    public String connect(String acceptVersion,String host,String name,String passCode,ConnectionHandler<T> connectionHandler)
     {
-        int outPut;
-        outPut = createNewconnect(name, connectionHandler);
-        if (outPut == -1 || !host.equals("stomp.cs.bgu.ac.il") || !acceptVersion.equals("version 1.2")) 
+        String outPut = "";
+        int result = 0;
+        if (passCode == null) 
         {
-            return -1;   
+            outPut = "passcode header is missing/misswritten ,";
         }
-        stompServer.getPasscodes().put(name, passCode);
+        if (name == null) 
+        {
+            outPut = "login header is missing/misswritten ,";
+        }
+        else
+        {
+            result = createNewconnect(name,passCode,connectionHandler);
+            if (result == -1) 
+            {
+                outPut = "wrong passowrd for already exists login ,";  
+            }
+            if (outPut.equals("")) 
+            {
+                outPut = "true"+result;
+            }
+        }
+        
+        if(!host.equals("stomp.cs.bgu.ac.il"))
+        {
+            outPut = outPut + "you should provide an appropirate host,";
+        }
+        if (!acceptVersion.equals("version 1.2")) 
+        {
+            outPut = outPut + "you should provide an appropirate version ";
+        }
         return outPut;
     }
     
-    public int createNewconnect(String name , ConnectionHandler<T> connectionHandler) 
+    public int createNewconnect(String name ,String passCode ,ConnectionHandler<T> connectionHandler) 
     {
         if (uniqueIdByName.containsKey(name)) 
         {
-            return -1;
+            if (!stompServer.getPasscodes().get(name).equals(passCode)) 
+            {
+                return -1;
+            }
+        }
+        else
+        {
+            stompServer.getPasscodes().put(name, passCode);
         }
         id++;
         uniqueIdByName.put(name,id);
@@ -39,8 +71,17 @@ public class Connectionsimpl<T>
         handelrsById.put(id, connectionHandler);
         return id;
     }
-    public boolean subscribe(int connectionId, String destination, int subscriptionID)
+    public String subscribe(int connectionId, String destination, int subscriptionID)
     {
+        String outPut = "";
+        if (subscriptionID == -1) 
+        {
+            outPut = "id header is missing/misswritten ,";
+        }
+        if (destination == null) 
+        {
+            outPut = "destination header is missing/misswritten";
+        }
         if(stompServer.getUserSubscribesByChannel().get(connectionId) == null)
         {
             stompServer.getUserSubscribesByChannel().put(connectionId, new ConcurrentHashMap<>());
@@ -49,78 +90,94 @@ public class Connectionsimpl<T>
         {
             stompServer.getUserSubscribesByIdSub().put(connectionId, new ConcurrentHashMap<>());
         }
-        if (stompServer.getUserSubscribesByChannel().get(connectionId).get(destination) != null || stompServer.getUserSubscribesByIdSub().get(connectionId).get(destination) != null) 
+        if (stompServer.getUserSubscribesByChannel().get(connectionId).get(destination) != null) 
         {
-            return false;
+            outPut =  "you had already subscribed to this channel ,";
         }        
         
         if(stompServer.getChannelsSubscribers().get(destination) == null)
         {
             stompServer.getChannelsSubscribers().put(destination, new ConcurrentHashMap<>());
         }
-        for (int channelIDs : stompServer.getChannelsSubscribers().get(destination).keySet()) 
-        {
-            if (channelIDs == subscriptionID) 
-            {
-                return false;
-            }
-        }
+
         for(int subId : stompServer.getUserSubscribesByIdSub().get(connectionId).keySet())
         {
             if (subId == subscriptionID) 
             {
-                return false;
+                outPut = outPut + "you had used this subscription ID for another channel ,";
             }
         }
-        stompServer.getUserSubscribesByChannel().get(connectionId).put(destination, subscriptionID);
-        stompServer.getUserSubscribesByIdSub().get(connectionId).put(subscriptionID, destination);
-        stompServer.getChannelsSubscribers().get(destination).put(subscriptionID,handelrsById.get(connectionId));
-
-        return true;
+        if (outPut.equals("")) 
+        {
+            stompServer.getUserSubscribesByChannel().get(connectionId).put(destination, subscriptionID);
+            stompServer.getUserSubscribesByIdSub().get(connectionId).put(subscriptionID, destination);
+            stompServer.getChannelsSubscribers().get(destination).put(subscriptionID,handelrsById.get(connectionId));     
+            outPut = "true";
+        }
+        return outPut;
     }
 
-    public boolean unSubscribe(int connectionId, int subscriptionID)
+    public String unSubscribe(int connectionId, int subscriptionID)
     {
         String destination = stompServer.getUserSubscribesByIdSub().get(connectionId).get(subscriptionID);
-        if (destination == null ||stompServer.getChannelsSubscribers().get(destination) == null || stompServer.getChannelsSubscribers().get(destination).get(subscriptionID) == null) 
+        String outPut = "";
+        if (subscriptionID == -1) 
         {
-            return false;
+            outPut = "id header is is missing/misswritten ,";
         }
-        if (stompServer.getUserSubscribesByChannel().get(connectionId) == null || stompServer.getUserSubscribesByChannel().get(connectionId).get(destination) != connectionId)
+        if (destination == null) 
         {
-            return false;
+            outPut = outPut + "you cant unsubscribe because you hadn't subscribed";
         }
-        stompServer.getUserSubscribesByIdSub().get(connectionId).remove(subscriptionID);
-        stompServer.getChannelsSubscribers().get(destination).remove(subscriptionID);
-        stompServer.getUserSubscribesByChannel().get(connectionId).remove(destination);
-
-        return true;
+        // if (stompServer.getUserSubscribesByChannel().get(connectionId) == null || stompServer.getUserSubscribesByChannel().get(connectionId).get(destination) != connectionId)
+        // {
+        //     return false;
+        // }
+        if (outPut.equals("")) 
+        {
+            stompServer.getUserSubscribesByIdSub().get(connectionId).remove(subscriptionID);
+            stompServer.getChannelsSubscribers().get(destination).remove(subscriptionID);
+            stompServer.getUserSubscribesByChannel().get(connectionId).remove(destination);
+            outPut = "true";
+        }
+        return outPut;
     }
 
 
 
-    public boolean send(int connectionId, T msg)
+    public String send(int connectionId, T msg)
     {
+        String outPut = "";
         if (handelrsById.get(connectionId) != null) 
         {
             handelrsById.get(connectionId).send(msg);
-            return true;
+            return "true";
         }
         else
         {
-            return false;
+            return "this unique id has disconnected";
         }
     }
 
-    public void send(String channel, T msg)
+    public String send(String channel, T msg)
     {
-        ConcurrentHashMap<Integer,ConnectionHandler> subscribers = stompServer.getChannelsSubscribers().get(channel);
-        for (ConnectionHandler connectionHandler : subscribers.values()) 
+        String outPut = "";
+        if (channel == null) 
         {
-            connectionHandler.send(msg);    
+            outPut = "destination header is missing/misswritten";
         }
+        else
+        {
+            ConcurrentHashMap<Integer,ConnectionHandler> subscribers = stompServer.getChannelsSubscribers().get(channel);
+            for (ConnectionHandler connectionHandler : subscribers.values()) 
+            {
+                connectionHandler.send(msg);    
+            }
+            outPut = "true";
+        }
+        return outPut;
     }
-
+    
     public void disconnect(int connectionId)
     {  
         for (String channel : stompServer.getUserSubscribesByChannel().get(connectionId).keySet()) 
@@ -152,5 +209,11 @@ public class Connectionsimpl<T>
     public StompServer getStompServer() 
     {
         return stompServer;
+    }
+
+    public Integer generateMessageID()
+    {
+        messageID++;
+        return messageID;
     }
 }
