@@ -61,6 +61,10 @@ public class StompServer
                     numThreads, Integer.parseInt(args[1]),
                     ()->new StompMessagingProtocolImpl(this.connectionsimpl),
                     ()->new StompMessageEncoderDecoderImpl()));//TO EDIT
+            stompServer = new StompServer(
+                new Reactor<StompFrame>(numThreads, Integer.parseInt(args[1]),
+                ()->new StompMessagingProtocolImpl(),
+                ()->new StompMessageEncoderDecoderImpl()));//TO EDIT
         }
         else if(args[2] == "tpc")
         {   
