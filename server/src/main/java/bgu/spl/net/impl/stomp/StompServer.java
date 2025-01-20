@@ -13,10 +13,12 @@ public class StompServer
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, String>> userSubscribesByIdSub = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, String> passcodes = new ConcurrentHashMap<>();
     private Server server;
+    private Connectionsimpl connectionsimpl;
 
-    public StompServer(Server server)
+    public StompServer(Server server,Connectionsimpl connectionsimpl)
     {
         this.server = server;
+        this.connectionsimpl = connectionsimpl;
     }
     // Getter for channelsSubscribers
     public ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConnectionHandler>> getChannelsSubscribers() {
@@ -54,7 +56,11 @@ public class StompServer
         int numThreads = 99;//TO EDIT
         if (args[2] == "reactor") 
         {
-            stompServer = new StompServer(new Reactor<StompFrame>(numThreads, Integer.parseInt(args[1]),()->new StompMessagingProtocolImpl(),()->new StompMessageEncoderDecoderImpl()));//TO EDIT
+            stompServer = new StompServer(
+                new Reactor<StompFrame>(
+                    numThreads, Integer.parseInt(args[1]),
+                    ()->new StompMessagingProtocolImpl(),
+                    ()->new StompMessageEncoderDecoderImpl()));//TO EDIT
         }
         else if(args[2] == "tpc")
         {   
