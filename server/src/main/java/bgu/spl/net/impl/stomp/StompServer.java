@@ -68,7 +68,7 @@ public class StompServer
         }
         else if(args[2] == "tpc")
         {   
-            stompServer = new StompServer(Server.threadPerClient(Integer.parseInt(args[1]),()->new StompMessagingProtocolImpl(this.connectionsimpl),()->new StompMessageEncoderDecoderImpl()));//TO EDIT
+            stompServer = new StompServer(Server.threadPerClient(Integer.parseInt(args[1]),() -> new StompMessagingProtocolImpl(this.connectionsimpl),()->new StompMessageEncoderDecoderImpl()));//TO EDIT
         }
         else
         {

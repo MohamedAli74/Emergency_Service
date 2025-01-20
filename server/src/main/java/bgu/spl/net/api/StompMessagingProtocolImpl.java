@@ -24,9 +24,9 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
     public void process(StompFrame message){
         if(message.getStompCommand()=="DISCONNECT"){
             shouldTerminate=true;
-            String response = connections.disconnect(ownersConnectionID);//should be boolean ?
-        if(!response.equals("true")){
-            sendError(message, response, message.getHeaders()[0][1]);
+            connections.disconnect(ownersConnectionID);//disconnect should be String
+        if(message.getHeaders()[0][1]!="receipt"){
+            sendError(message, "the receipt header is missing/misswritten", message.getHeaders()[0][1]);
         }else{
             sendReceipt(message.getHeaders()[0][1]);
         
@@ -39,7 +39,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
                 if(header[0] == "receipt")receipt = header[1];
                 if(header[0] == "id")id = Integer.parseInt(header[1]);  
             }
-            String response = connections.unsubscribe(ownersConnectionID,id);
+            String response = connections.unSubscribe(ownersConnectionID,id);
             if(!response.equals("true")){
                 sendError(message,response, receipt);
             }
@@ -53,12 +53,12 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
                 if(header[0] == "id")id = Integer.parseInt(message.getHeaders()[0][1]);
                 if(header[0] == "destination")destination = header[1];  
             }
-            String responce =connections.subscribe(ownersConnectionID,destination,id)
-            if(!responce.equals("true")){
-                sendError(message, responce, receipt);
+            String response =connections.subscribe(ownersConnectionID,destination,id);
+            if(!response.equals("true")){
+                sendError(message, response, receipt);
             }
             else{
-            if(receipt!=null && responce.equals("true"))sendReceipt(message);
+            if(receipt!=null && response.equals("true"))sendReceipt(receipt);
         }
     }
         if(message.getStompCommand() == "SEND"){
@@ -71,7 +71,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
             
             String[][] headers = {{"subscription",ownersConnectionID.toString()},{"message-id" , connections.generateMessageID().toString()},{"destination" , destination}};
             StompFrame msg = new StompFrame("MESSAGE", headers, message.getFrameBody());
-            String response = connections.send(destination,msg));
+            String response = connections.send(destination,msg);
             if(!response.equals("true")){
                 sendError(message, response, receipt);
             }if(receipt!=null && response.equals("true"))sendReceipt(receipt);
