@@ -30,6 +30,7 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
         this.chan = chan;
         this.encdec = reader;
         this.protocol = protocol;
+        this.protocol.setConnectionHandler(this);
         this.reactor = reactor;
     }
 
