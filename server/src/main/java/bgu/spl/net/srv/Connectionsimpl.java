@@ -16,6 +16,10 @@ public class Connectionsimpl<T> implements Connections<T>
         this.id = 0;
     }
 
+    public void setStompServer(StompServer stompServer){
+        this.stompServer = stompServer;
+    }
+
     public String connect(String acceptVersion,String host,String name,String passCode,ConnectionHandler<T> connectionHandler)
     {
         String outPut = "";

@@ -15,10 +15,10 @@ public class StompServer
     private Server server;
     private Connectionsimpl connectionsimpl;
 
-    public StompServer(Server server,Connectionsimpl connectionsimpl)
+    public StompServer(Server server, Connectionsimpl connectionsimpl)
     {
-        this.server = server;
         this.connectionsimpl = connectionsimpl;
+        this.server = server;
     }
     // Getter for channelsSubscribers
     public ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConnectionHandler>> getChannelsSubscribers() {
@@ -49,6 +49,9 @@ public class StompServer
         return server;
     }
     
+    public void setConnectionsimpl(Connectionsimpl connectionsimpl){
+        this.connectionsimpl = connectionsimpl;
+    }
 
     public static void main(String[] args) 
     {
@@ -56,19 +59,29 @@ public class StompServer
         int numThreads = 99;//TO EDIT
         if (args[2] == "reactor") 
         {
+            Connectionsimpl connectionsimpl = new Connectionsimpl<>(null);
             stompServer = new StompServer(
                 new Reactor<StompFrame>(
                     numThreads, Integer.parseInt(args[1]),
-                    ()->new StompMessagingProtocolImpl(this.connectionsimpl),
-                    ()->new StompMessageEncoderDecoderImpl()));//TO EDIT
-            stompServer = new StompServer(
-                new Reactor<StompFrame>(numThreads, Integer.parseInt(args[1]),
-                ()->new StompMessagingProtocolImpl(),
-                ()->new StompMessageEncoderDecoderImpl()));//TO EDIT
+                    ()->new StompMessagingProtocolImpl(connectionsimpl),
+                    ()->new StompMessageEncoderDecoderImpl()
+                ),
+                connectionsimpl
+            );
+            connectionsimpl.setStompServer(stompServer);
         }
+        
         else if(args[2] == "tpc")
         {   
-            stompServer = new StompServer(Server.threadPerClient(Integer.parseInt(args[1]),() -> new StompMessagingProtocolImpl(this.connectionsimpl),()->new StompMessageEncoderDecoderImpl()));//TO EDIT
+            Connectionsimpl connectionsimpl = new Connectionsimpl<>(null);
+            stompServer = new StompServer(
+                    Server.threadPerClient(
+                    Integer.parseInt(args[1]),
+                    ()->new StompMessagingProtocolImpl(connectionsimpl),
+                    ()->new StompMessageEncoderDecoderImpl()
+                    ),
+                    connectionsimpl
+            );//TO EDIT
         }
         else
         {
