@@ -149,17 +149,17 @@ public class Connectionsimpl<T> implements Connections<T>
 
 
 
-    public String send(int connectionId, T msg)
+    public boolean send(int connectionId, T msg)
     {
         String outPut = "";
         if (handelrsById.get(connectionId) != null) 
         {
             handelrsById.get(connectionId).send(msg);
-            return "true";
+            return true;
         }
         else
         {
-            return "this unique id has disconnected";
+            return false;
         }
     }
 
