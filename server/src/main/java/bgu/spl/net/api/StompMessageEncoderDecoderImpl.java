@@ -1,14 +1,12 @@
 package bgu.spl.net.api;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
+import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-
 import bgu.spl.net.impl.stomp.StompFrame;
 
 public class StompMessageEncoderDecoderImpl implements MessageEncoderDecoder<StompFrame>{
-    private ByteBuffer currentMessage;
+    private ByteArrayOutputStream currentMessage = new ByteArrayOutputStream();
     /**
      * add the next byte to the decoding process
      *
@@ -19,9 +17,10 @@ public class StompMessageEncoderDecoderImpl implements MessageEncoderDecoder<Sto
 
      @Override
      public StompFrame decodeNextByte(byte nextByte) {
-        currentMessage.put(nextByte);
+
+        currentMessage.write(nextByte);
         if(nextByte == 0){
-            String messageString = new String(currentMessage.array());
+            String messageString = new String(currentMessage.toByteArray());
             String[] lines = messageString.split("\n");
             String StompCommand = lines[0];
             ArrayList<String[]> Headers = new ArrayList<>();
@@ -35,7 +34,9 @@ public class StompMessageEncoderDecoderImpl implements MessageEncoderDecoder<Sto
 
             for(i = 1 ;i < numberOfHeaders + 1 ; i++){
                 String[] splitted = lines[i].split(":");
+                if(splitted.length==2){
                     Headers.add(splitted);
+                }
             }
             String FrameBody = "";
             for(;i < lines.length; i++){
