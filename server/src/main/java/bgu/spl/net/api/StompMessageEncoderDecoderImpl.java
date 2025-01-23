@@ -35,13 +35,20 @@ public class StompMessageEncoderDecoderImpl implements MessageEncoderDecoder<Sto
 
             for(i = 1 ;i < numberOfHeaders + 1 ; i++){
                 String[] splitted = lines[i].split(":");
-                Headers.add(splitted);
+                    Headers.add(splitted);
             }
             String FrameBody = "";
             for(;i < lines.length; i++){
-                FrameBody = FrameBody + lines[i];
+                FrameBody = FrameBody +"\n"+ lines[i]+"\n";
             }
-            return new StompFrame(StompCommand, (String[][])Headers.toArray(), FrameBody);
+            String[][] DoubleArrrayHeaders = new String[Headers.size()][2];
+            for(int index = 0 ; index<Headers.size() ; index++){
+                DoubleArrrayHeaders[index][0] = Headers.get(index)[0];
+                DoubleArrrayHeaders[index][1] = Headers.get(index)[1];
+            }
+            currentMessage = new ByteArrayOutputStream();
+            
+            return new StompFrame(StompCommand, DoubleArrrayHeaders, FrameBody);
         }
         return null;
      }
