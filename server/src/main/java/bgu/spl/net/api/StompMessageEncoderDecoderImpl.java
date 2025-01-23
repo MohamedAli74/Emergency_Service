@@ -25,8 +25,15 @@ public class StompMessageEncoderDecoderImpl implements MessageEncoderDecoder<Sto
             String[] lines = messageString.split("\n");
             String StompCommand = lines[0];
             ArrayList<String[]> Headers = new ArrayList<>();
-            int i;
-            for(i = 1 ; lines[i]!="" && i < lines.length; i++){
+            int i ,numberOfHeaders=0;
+            if(StompCommand.equals("DISCONNECT"))numberOfHeaders=0;
+            if(StompCommand.equals("SEND"))numberOfHeaders=1;
+            if(StompCommand.equals("SUBSCRIBE"))numberOfHeaders =2;
+            if(StompCommand.equals("UNSUBSCRIBE"))numberOfHeaders =1;
+            if(StompCommand.equals("CONNECT"))numberOfHeaders =4;
+            for(String line : lines)if(line.length()>7 && line.substring(0, 7).equals("receipt"))numberOfHeaders+=1;
+
+            for(i = 1 ;i < numberOfHeaders + 1 ; i++){
                 String[] splitted = lines[i].split(":");
                 Headers.add(splitted);
             }
