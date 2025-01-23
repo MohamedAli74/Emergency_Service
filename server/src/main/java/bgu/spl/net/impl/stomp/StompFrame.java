@@ -26,10 +26,12 @@ public class StompFrame {
     public String toString() {
         String outPut = "";
         outPut = outPut + StompCommand + "\n";
+
         for (int i = 0; i < Headers.length; i++) {
-            outPut = outPut + Headers[i][0] + ": " + Headers[i][1] + "\n";
+            outPut = outPut + Headers[i][0] + ": " + Headers[i][1] + "\n\n";
         }
-        outPut = outPut + "\n" + FrameBody;
+        if(FrameBody!=null)outPut = outPut + FrameBody + "\n";
+        outPut = outPut + '\0';
         return outPut;
     }
 }
