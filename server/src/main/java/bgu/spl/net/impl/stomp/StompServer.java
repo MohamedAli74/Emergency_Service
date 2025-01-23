@@ -1,7 +1,5 @@
 package bgu.spl.net.impl.stomp;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import bgu.spl.net.srv.*;
 import bgu.spl.net.api.*;
 
@@ -16,7 +14,8 @@ public class StompServer
     private Connectionsimpl connectionsimpl;
 
     public StompServer(Server server, Connectionsimpl connectionsimpl)
-    {
+    {   
+        connectionsimpl.setStompServer(this);
         this.connectionsimpl = connectionsimpl;
         this.server = server;
     }
@@ -57,28 +56,29 @@ public class StompServer
     {
         StompServer stompServer;
         int numThreads = 99;//TO EDIT
-        if (args[2] == "reactor") 
+
+        if (args[1].equals("reactor")) 
         {
             Connectionsimpl connectionsimpl = new Connectionsimpl<>(null);
             stompServer = new StompServer(
-                new Reactor<StompFrame>(
-                    numThreads, Integer.parseInt(args[1]),
+                    new Reactor<StompFrame>(
+                    numThreads, Integer.parseInt(args[0]),
                     ()->new StompMessagingProtocolImpl(connectionsimpl),
                     ()->new StompMessageEncoderDecoderImpl()
                 ),
                 connectionsimpl
             );
-            connectionsimpl.setStompServer(stompServer);
+            
         }
         
-        else if(args[2] == "tpc")
+        else if(args[1].equals("tpc"))
         {   
             Connectionsimpl connectionsimpl = new Connectionsimpl<>(null);
             stompServer = new StompServer(
                     Server.threadPerClient(
-                    Integer.parseInt(args[1]),
-                    ()->new StompMessagingProtocolImpl(connectionsimpl),
-                    ()->new StompMessageEncoderDecoderImpl()
+                        Integer.parseInt(args[0]),
+                        ()->new StompMessagingProtocolImpl(connectionsimpl),
+                        ()->new StompMessageEncoderDecoderImpl()
                     ),
                     connectionsimpl
             );//TO EDIT
@@ -88,8 +88,6 @@ public class StompServer
             stompServer = null;
             System.out.println("give me an appropirate arguments please!");
         }
-
-        Connectionsimpl connectionsimp = new Connectionsimpl<>(stompServer); 
         stompServer.getServer().serve();
 
     }
