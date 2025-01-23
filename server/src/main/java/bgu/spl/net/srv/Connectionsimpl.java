@@ -32,8 +32,11 @@ public class Connectionsimpl<T> implements Connections<T>
         {
             outPut = "login header is missing/misswritten ,";
         }
-        else
-        {
+
+        else{
+        if(uniqueIdByName.get(name)!=null){
+            outPut = "this user is connected";
+        }
             result = createNewconnect(name,passCode,connectionHandler);
             if (result == -1) 
             {
@@ -49,7 +52,7 @@ public class Connectionsimpl<T> implements Connections<T>
         {
             outPut = outPut + "you should provide an appropirate host,";
         }
-        if (!acceptVersion.equals("version 1.2")) 
+        if (!acceptVersion.equals("1.2")) 
         {
             outPut = outPut + "you should provide an appropirate version ";
         }
@@ -58,7 +61,7 @@ public class Connectionsimpl<T> implements Connections<T>
     
     public int createNewconnect(String name ,String passCode ,ConnectionHandler<T> connectionHandler) 
     {
-        if (uniqueIdByName.containsKey(name)) 
+        if (stompServer.getPasscodes().containsKey(name)) 
         {
             if (!stompServer.getPasscodes().get(name).equals(passCode)) 
             {
@@ -66,7 +69,7 @@ public class Connectionsimpl<T> implements Connections<T>
             }
         }
         else
-        {
+        {   
             stompServer.getPasscodes().put(name, passCode);
         }
         id++;
@@ -77,6 +80,7 @@ public class Connectionsimpl<T> implements Connections<T>
     }
     public String subscribe(int connectionId, String destination, int subscriptionID)
     {
+        destination = "/" + destination;
         String outPut = "";
         if (subscriptionID == -1) 
         {
@@ -133,10 +137,7 @@ public class Connectionsimpl<T> implements Connections<T>
         {
             outPut = outPut + "you cant unsubscribe because you hadn't subscribed";
         }
-        // if (stompServer.getUserSubscribesByChannel().get(connectionId) == null || stompServer.getUserSubscribesByChannel().get(connectionId).get(destination) != connectionId)
-        // {
-        //     return false;
-        // }
+
         if (outPut.equals("")) 
         {
             stompServer.getUserSubscribesByIdSub().get(connectionId).remove(subscriptionID);
@@ -151,7 +152,6 @@ public class Connectionsimpl<T> implements Connections<T>
 
     public boolean send(int connectionId, T msg)
     {
-        String outPut = "";
         if (handelrsById.get(connectionId) != null) 
         {
             handelrsById.get(connectionId).send(msg);
@@ -163,33 +163,39 @@ public class Connectionsimpl<T> implements Connections<T>
         }
     }
 
-    public String send(String channel, T msg)
-    {
+    public String send(String channel, T msg, Integer senderId)
+    {   
         String outPut = "";
-        if (channel == null) 
-        {
+        if (channel == null){
             outPut = "destination header is missing/misswritten";
         }
         else
         {
             ConcurrentHashMap<Integer,ConnectionHandler> subscribers = stompServer.getChannelsSubscribers().get(channel);
-            for (ConnectionHandler connectionHandler : subscribers.values()) 
-            {
+            
+            if(!subscribers.containsKey(senderId)){
+                outPut = "the sender is not subscribed to the desired channel";
+            }
+            else{
+                for (ConnectionHandler connectionHandler : subscribers.values()) {
                 connectionHandler.send(msg);    
             }
             outPut = "true";
+            }
         }
         return outPut;
     }
     
     public void disconnect(int connectionId)
     {  
+        if(stompServer.getUserSubscribesByChannel().get(connectionId)!=null){
         for (String channel : stompServer.getUserSubscribesByChannel().get(connectionId).keySet()) 
         {
             stompServer.getChannelsSubscribers().get(channel).remove(stompServer.getUserSubscribesByChannel().get(connectionId).get(channel));
         }
         stompServer.getUserSubscribesByChannel().remove(connectionId);
         stompServer.getUserSubscribesByIdSub().remove(connectionId);
+        }
         String name = nameByUniqueId.remove(connectionId);
         uniqueIdByName.remove(name);
         handelrsById.remove(connectionId);
