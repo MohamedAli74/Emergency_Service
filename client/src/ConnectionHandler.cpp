@@ -8,16 +8,14 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),
-                                                                socket_(io_service_) {}
+ConnectionHandler::ConnectionHandler(string host, short port) : host_(host), port_(port), io_service_(),socket_(io_service_) {}
 
 ConnectionHandler::~ConnectionHandler() {
 	close();
 }
 
 bool ConnectionHandler::connect() {
-	std::cout << "Starting connect to "
-	          << host_ << ":" << port_ << std::endl;
+	std::cout << "Starting connect to "<< host_ << ":" << port_ << std::endl;
 	try {
 		tcp::endpoint endpoint(boost::asio::ip::address::from_string(host_), port_); // the server endpoint
 		boost::system::error_code error;
@@ -65,11 +63,11 @@ bool ConnectionHandler::sendBytes(const char bytes[], int bytesToWrite) {
 }
 
 bool ConnectionHandler::getLine(std::string &line) {
-	return getFrameAscii(line, '\n');
+	return getFrameAscii(line, '\0');
 }
 
 bool ConnectionHandler::sendLine(std::string &line) {
-	return sendFrameAscii(line, '\n');
+	return sendFrameAscii(line, '\0');
 }
 
 
