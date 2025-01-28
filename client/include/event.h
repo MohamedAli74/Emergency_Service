@@ -40,6 +40,9 @@ public:
 struct names_and_events {
     std::string channel_name;
     std::vector<Event> events;
+
+    public:
+    std::vector<Event> getEvents();
 };
 
 // function that parses the json file and returns a names_and_events object
