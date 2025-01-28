@@ -31,7 +31,7 @@ public class StompFrame {
             outPut = outPut + Headers[i][0] + ": " + Headers[i][1] + "\n\n";
         }
         if(FrameBody!=null)outPut = outPut + FrameBody + "\n";
-        outPut = outPut + '\0';
+        outPut = outPut + '\u0000';
         return outPut;
     }
 }
