@@ -7,11 +7,12 @@ using namespace std;
 #include <memory>
 #include <sstream>
 #include "ConnectionHandler.h"
-#include "StompProtocol.h"
 #include "event.h"
 #include <StompFrame.h>
 #include <summary.h>
 #include <fstream>
+#include <thread>
+
 
 class StompClient
 {
@@ -30,19 +31,53 @@ class StompClient
 
 	public:
 	
-	int main(int argc, char *argv[]) 
-	{
-		string host = argv[1];
-		short port = atoi(argv[2]);
-		StompClient StompClient(host,port);
-		return 0;
+	~StompClient() {
+		delete connectionHandler;
+	}
+	StompClient(const StompClient& other) 
+		: connectionHandler(other.connectionHandler ? new ConnectionHandler(*other.connectionHandler) : nullptr),
+			receiptHashTable(other.receiptHashTable),
+			subscriptionByChannel(other.subscriptionByChannel),
+			subscriptionByID(other.subscriptionByID),
+			usersEventsByChannel(other.usersEventsByChannel),
+			host(other.host),
+			port(other.port),
+			isConnected(other.isConnected),
+			receiptID(other.receiptID),
+			id(other.id),
+			currentUser(other.currentUser) {}
+
+	StompClient& operator=(const StompClient& other) {
+		if (this == &other) {
+			return *this;
+		}
+		delete connectionHandler;
+		connectionHandler = other.connectionHandler ? new ConnectionHandler(*other.connectionHandler) : nullptr;
+		receiptHashTable = other.receiptHashTable;
+		subscriptionByChannel = other.subscriptionByChannel;
+		subscriptionByID = other.subscriptionByID;
+		usersEventsByChannel = other.usersEventsByChannel;
+		host = other.host;
+		port = other.port;
+		isConnected = other.isConnected;
+		receiptID = other.receiptID;
+		id = other.id;
+		currentUser = other.currentUser;
+		return *this;
 	}
 
-	StompClient(string host ,short port):host(host),port(port),isConnected(false),connectionHandler(nullptr),receiptID(0),id(0){
+	StompClient():
+	connectionHandler(nullptr),
+	receiptHashTable(unordered_map<string,string>()),
+	subscriptionByChannel(unordered_map<string,string>()),
+	subscriptionByID(unordered_map<string,string>()),
+	usersEventsByChannel(unordered_map<string,unordered_map<string,std::vector<Event>>>()),
+	host(),port(),isConnected(false),receiptID(0),id(0),currentUser(""){
 	}
 
 	void clinetHandeler()
 	{
+		cout << "entered the ClientHandler" << endl;
 		string currentLine;
 		while(true)
 		{
@@ -104,7 +139,7 @@ class StompClient
 					}
 					else this->login(tokens[1], tokens[2], tokens[3]);
 				}
-				if(command == "join" || command == "exit" || command == "report" || command == "summary"){
+				else if(command == "join" || command == "exit" || command == "report" || command == "summary"){
 					cout << "The client is not logged in, log in before trying again" << endl ;
 				}
 				else{
@@ -114,6 +149,10 @@ class StompClient
 		}
 	}
 	void login(const string& hostPort, const string& username, const string& passcode) {
+		string host = hostPort.substr(0, hostPort.find(':'));
+		short port = stoi(hostPort.substr(hostPort.find(':') + 1));
+		this -> host = host;
+		this -> port = port;
 		connectionHandler = new ConnectionHandler(host,port);
 		if (!connectionHandler->connect()) 
 		{
@@ -127,6 +166,8 @@ class StompClient
 			StompFrame message = getConnectMessage(username,passcode);
 			string stringMessage = message.toString();
 			currentUser = username;
+			thread t1([&]() { readHandeler(); });
+			t1.detach();
 			if (!(connectionHandler->sendLine(stringMessage)))
 			{
 				cout << "Could not connect to server" << endl;
@@ -165,7 +206,7 @@ class StompClient
 				close();
 			}
 			else{
-				receiptHashTable.insert(receipt,"exit channel "+channel);
+				receiptHashTable.insert({receipt,"exit channel "+channel});
 			}
 		}
 	}
@@ -173,7 +214,7 @@ class StompClient
 	void report(const string& file) {
 		names_and_events parsed = parseEventsFile(file);
 		vector<Event> detectedEvents = parsed.events;
-		for (int i = 0; i < detectedEvents.size(); i++) {
+		for (size_t i = 0; i < detectedEvents.size(); i++) {
 			Event event = detectedEvents.at(i);
 			string channel = event.get_channel_name();
 			event.setEventOwnerUser(currentUser);
@@ -221,7 +262,7 @@ class StompClient
 					std::vector<Report> reports = summary.get_Events_Report();
 					vector<Report> sortedReports = sort(reports);
 					
-					for(int i = 0; i < sortedReports.size(); i++) {
+					for(size_t i = 0; i < sortedReports.size(); i++) {
 						Report report = sortedReports.at(i);
 						if(report.get_summary().length() > 27) {
 							report.set_summary(report.get_summary().substr(0, 27) + "...");
@@ -256,7 +297,8 @@ class StompClient
 
 	void readHandeler()
 	{
-		while(true)
+		cout << "entered the readHandeler" << endl;
+		while(isConnected)
 		{
 			string receivedMessage;
 			if(!(connectionHandler->getLine(receivedMessage)))
@@ -289,11 +331,11 @@ class StompClient
 				{
 					string rID = message.getHeaders().at(0).second;
 					string receipt = receiptHashTable.at(rID);
-					std::vector<std::string> words = convertTOtokensByWords(receipt);
+					std::vector<std::string> words = convertTOtokensByWords2(receipt);
 					if(words[0] == "joined")
 					{
-						subscriptionByChannel.insert(words[2],words[3]);
-						subscriptionByID.insert(words[3],words[2]);
+						subscriptionByChannel.insert({words[2],words[3]});
+						subscriptionByID.insert({words[3],words[2]});
 						cout << "joined channel "+words[2] << endl;
 					}
 					else if (words[0] == "exit")
@@ -346,7 +388,7 @@ class StompClient
 	}
 	StompFrame getConnectMessage(string username ,string passcode)
 	{
-		StompFrame outPut("CONNECT",{{"accept-version","1.2"},{"host",host},{"login",username},{"passcode",passcode}},"");;
+		StompFrame outPut("CONNECT",{{"accept-version","1.2"},{"host","stomp.cs.bgu.ac.il"},{"login",username},{"passcode",passcode}},"");;
 		return outPut; 
 	}
 	StompFrame getDisConnectMessage(string receipt)
@@ -377,13 +419,13 @@ class StompClient
 
 	vector<Report> sort(vector<Report> reports) {
 		vector<Report> sortedReports;
-		for (int i = 0; i < reports.size(); i++) {
+		for (size_t i = 0; i < reports.size(); i++) {
 			Report report = reports.at(i);
 			if (sortedReports.size() == 0) {
 				sortedReports.push_back(report);
 			} else {
 				bool added = false;
-				for (int j = 0; j < sortedReports.size(); j++) {
+				for (size_t j = 0; j < sortedReports.size(); j++) {
 					Report sortedReport = sortedReports.at(j);
 					if (report.get_date_time() < sortedReport.get_date_time() || 
 					   (report.get_date_time() == sortedReport.get_date_time() && report.get_event_name() < sortedReport.get_event_name())) {
@@ -400,5 +442,23 @@ class StompClient
 		return sortedReports;
 	}
 
-	
+    std::vector<std::string> convertTOtokensByWords2(std::string messageString){
+    	std::istringstream iss(messageString); 
+    	std::string word;            
+    	std::vector<std::string> words; 
+
+		while (iss >> word) {
+			words.push_back(word);
+		}
+		return words;
+	}
 };
+
+
+int main(int argc, char *argv[]) 
+{
+	cout << "entered main" << endl;
+	StompClient stompClient;
+	stompClient.clinetHandeler();
+	return 0;
+}

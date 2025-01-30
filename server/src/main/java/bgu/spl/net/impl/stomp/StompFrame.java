@@ -28,7 +28,7 @@ public class StompFrame {
         outPut = outPut + StompCommand + "\n";
 
         for (int i = 0; i < Headers.length; i++) {
-            outPut = outPut + Headers[i][0] + ": " + Headers[i][1] + "\n\n";
+            outPut = outPut + Headers[i][0] + ": " + Headers[i][1] + "\n";
         }
         if(FrameBody!=null)outPut = outPut + FrameBody + "\n";
         outPut = outPut + '\u0000';

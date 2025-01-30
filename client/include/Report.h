@@ -15,4 +15,5 @@ class Report{
         const std::string &get_event_name() const;
         const std::string &get_summary() const;
         void set_summary(std::string summary);
+        
 };

@@ -83,6 +83,7 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
             if(receipt!=null && response.equals("true"))sendReceipt(receipt);
         }
         if(message.getStompCommand().equals("CONNECT")){
+            System.out.println("login detected");
             String userName = null ;
             String passCode = null ;
             String host = null ;
@@ -95,9 +96,11 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
                 if(header[0] .equals("passcode"))passCode = header[1];
                 if(header[0] .equals("login"))userName = header[1];
                 if(header[0] .equals("receipt"))receipt = header[1];
+                System.out.println(acceptVersion + " " + host + " " + passCode + " " + userName + " " + receipt);
             }
             String response  = connections.connect(acceptVersion,host,userName,passCode,connectionHandler);
             if(!(response.substring(0, 4)).equals("true")){
+                System.out.println(message.toString());
                 sendError(message, response, receipt);
             }else{
                 start(Integer.parseInt(response.substring(4, response.length())),connections);
@@ -135,7 +138,9 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
         //in the case of logging out then trying to login with false info
         //(thus needing to send an error) we can't send the error to the disconnected user 
 
-        connections.send(ownersConnectionID, error);
+        System.out.println(error.toString());
+        if(ownersConnectionID!=null)
+            connections.send(ownersConnectionID, error);
     }
 
     @Override

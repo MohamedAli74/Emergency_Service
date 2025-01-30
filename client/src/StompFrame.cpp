@@ -1,7 +1,4 @@
 #include "StompFrame.h"
-
-#pragma once
-
 #include <string>
 #include <vector>
 #include <sstream>
@@ -10,8 +7,11 @@
     StompFrame::StompFrame(const std::string& stompCommand, const std::vector<std::pair<std::string, std::string>>& headers, const std::string& frameBody)
         : stompCommand(stompCommand), headers(headers), frameBody(frameBody) {}
 
-    StompFrame::StompFrame(const std::string& stringMessage) {
+    StompFrame::StompFrame(const std::string& stringMessage): stompCommand(""), headers(), frameBody("")  {
         std::vector<std::string> lines = convertTOtokensByLines(stringMessage);
+
+        std::cout << "in stompFrame Constructor" << std::endl;
+        
         stompCommand = lines[0];
         if(stompCommand == "CONNECTED"){
             std::string versionHeader = lines[1];
@@ -19,7 +19,7 @@
             headers.push_back(std::make_pair("version", version));
             frameBody = "";
         }else if(stompCommand == "MESSAGE"){
-            for(int i = 1; i < lines.size(); i++){
+            for(size_t i = 1; i < lines.size(); i++){
                 std::string line = lines[i];
                 std::vector<std::string> words = convertTOtokensByWords(line);
                 if(words[0] == "subscription:")
@@ -35,7 +35,7 @@
             headers.push_back(std::make_pair("receipt-id", receiptID));
             frameBody = "";
         }else if(stompCommand == "ERROR"){
-            for(int i = 1; i < lines.size(); i++){
+            for(size_t i = 1; i < lines.size(); i++){
                 std::vector<std::string> words = convertTOtokensByWords(lines[i]);
                 if(words[0] == "message:")
                     headers.push_back(std::make_pair("message", words[1]));
@@ -63,7 +63,7 @@
         outPut << stompCommand << "\n";
 
         for (const auto& header : headers) {
-            outPut << header.first << ": " << header.second << "\n\n";
+            outPut << header.first << ":" << header.second << "\n";
         }
 
         if (!frameBody.empty()) {
@@ -74,8 +74,7 @@
         return outPut.str();
     }
 
-    static std::vector<std::string> convertTOtokensByWords(std::string messageString)
-	{
+    std::vector<std::string> StompFrame::convertTOtokensByWords(std::string messageString){
     	std::istringstream iss(messageString); 
     	std::string word;            
     	std::vector<std::string> words; 
@@ -85,7 +84,8 @@
 		}
 		return words;
 	}
-	static std::vector<std::string> convertTOtokensByLines(std::string messageString)
+
+    std::vector<std::string> StompFrame::convertTOtokensByLines(std::string messageString)
 	{
 	
 		std::vector<std::string> lines;

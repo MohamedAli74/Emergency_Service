@@ -1,19 +1,21 @@
 package bgu.spl.net.srv;
 import bgu.spl.net.impl.stomp.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 public class Connectionsimpl<T> implements Connections<T>
 {
     ConcurrentHashMap<String, Integer> uniqueIdByName = new ConcurrentHashMap<>();
     ConcurrentHashMap<Integer, String> nameByUniqueId = new ConcurrentHashMap<>();
     ConcurrentHashMap<Integer, ConnectionHandler<T>> handelrsById = new ConcurrentHashMap<>();
     StompServer stompServer;
-    int messageID = 0;
-    int id = 0;
+    AtomicInteger messageID;
+    AtomicInteger id;
 
     public Connectionsimpl(StompServer stompServer)
     {
         this.stompServer = stompServer;
-        this.id = 0;
+        this.id = new AtomicInteger(0);
+        this.messageID = new AtomicInteger(0);
     }
 
     public void setStompServer(StompServer stompServer){
@@ -72,11 +74,11 @@ public class Connectionsimpl<T> implements Connections<T>
         {   
             stompServer.getPasscodes().put(name, passCode);
         }
-        id++;
-        uniqueIdByName.put(name,id);
-        nameByUniqueId.put(id, name);
-        handelrsById.put(id, connectionHandler);
-        return id;
+        id.incrementAndGet();
+        uniqueIdByName.put(name,id.get());
+        nameByUniqueId.put(id.get(), name);
+        handelrsById.put(id.get(), connectionHandler);
+        return id.get();
     }
     public String subscribe(int connectionId, String destination, int subscriptionID)
     {
@@ -223,7 +225,6 @@ public class Connectionsimpl<T> implements Connections<T>
 
     public Integer generateMessageID()
     {
-        messageID++;
-        return messageID;
+        return messageID.incrementAndGet();
     }
 }

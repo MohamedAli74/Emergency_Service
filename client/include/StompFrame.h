@@ -24,7 +24,7 @@ public:
 
     std::string toString() const;
 
-};
-    static std::vector<std::string> convertTOtokensByLines(std::string messageString);
+    std::vector<std::string> convertTOtokensByWords(std::string messageString);
 
-    static std::vector<std::string> convertTOtokensByWords(std::string messageString);
+    std::vector<std::string> convertTOtokensByLines(std::string messageString);
+};

@@ -14,6 +14,11 @@ ConnectionHandler::~ConnectionHandler() {
 	close();
 }
 
+ConnectionHandler::ConnectionHandler(const ConnectionHandler &other) 
+	: host_(other.host_), port_(other.port_), io_service_(), socket_(io_service_) {
+	// Copy constructor does not copy the socket state, only the host and port
+}
+
 bool ConnectionHandler::connect() {
 	std::cout << "Starting connect to "<< host_ << ":" << port_ << std::endl;
 	try {
