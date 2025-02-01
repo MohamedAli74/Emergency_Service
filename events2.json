@@ -1,0 +1,75 @@
+{
+    "channel_name": "police",
+    "events": [
+        {
+            "event_name": "Shoplifting",
+            "city": "Springfield",
+            "date_time": 1736000000,
+            "description": "Suspect stole several items from a local grocery store. Described as a young female wearing a red jacket.",
+            "general_information": {
+                "active": true,
+                "forces_arrival_at_scene": false
+            }
+        },
+        {
+            "event_name": "Public Intoxication",
+            "city": "Shelbyville",
+            "date_time": 1736100000,
+            "description": "An intoxicated individual was causing a disturbance at Central Park. Suspect was taken into custody.",
+            "general_information": {
+                "active": false,
+                "forces_arrival_at_scene": true
+            }
+        },
+        {
+            "event_name": "Domestic Disturbance",
+            "city": "Quahog",
+            "date_time": 1736200000,
+            "description": "Police responded to a domestic disturbance call at a residence on Maple Street. No injuries reported.",
+            "general_information": {
+                "active": true,
+                "forces_arrival_at_scene": true
+            }
+        },
+        {
+            "event_name": "Traffic Violation",
+            "city": "Bedrock",
+            "date_time": 1736300000,
+            "description": "Driver was cited for running a red light at the intersection of Main Street and First Avenue.",
+            "general_information": {
+                "active": false,
+                "forces_arrival_at_scene": false
+            }
+        },
+        {
+            "event_name": "Fraud",
+            "city": "Metropolis",
+            "date_time": 1736400000,
+            "description": "Suspect used a stolen credit card to make several purchases at a local electronics store.",
+            "general_information": {
+                "active": true,
+                "forces_arrival_at_scene": true
+            }
+        },
+        {
+            "event_name": "Noise Complaint",
+            "city": "Smallville",
+            "date_time": 1736500000,
+            "description": "Residents reported loud music coming from a house party on Elm Street. Police issued a warning.",
+            "general_information": {
+                "active": false,
+                "forces_arrival_at_scene": false
+            }
+        },
+        {
+            "event_name": "Missing Person",
+            "city": "Hill Valley",
+            "date_time": 1736600000,
+            "description": "A 12-year-old child was reported missing from a local park. Last seen wearing a blue shirt and jeans.",
+            "general_information": {
+                "active": true,
+                "forces_arrival_at_scene": true
+            }
+        }
+    ]
+}
