@@ -97,10 +97,10 @@ eventOwnerUser(""){
                 continue;
             }
             else if(key == "description") {
-                while(getline(ss,line,'\n')) {
-                    eventDescription += line + "\n";
+                description = "";
+                for(size_t i=1 ;i < lineArgs.size(); i++){
+                    description += lineArgs.at(i);
                 }
-                description = eventDescription;
             }
 
             if(inGeneralInformation) {
