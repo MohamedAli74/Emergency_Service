@@ -31,13 +31,13 @@
 
         for (size_t i = 0; i < event_strings.size(); i++){
             Event event = event_strings.at(i);
-            if(event.get_general_information().at("active") == "true"){
+            if(event.get_general_information().at("   active") == "true"){
                 activeCounter++;
             }
-            if(event.get_general_information().at("forces arrival at scene") == "true"){
+            if(event.get_general_information().at("   forces arrival at scene") == "true"){
                 forcesCounter++;
             }
-            Report report(event.get_city(), epochToDateTime(event.get_date_time()), event.get_name(), event.get_description());
+            Report report(event.get_city(), epochToDateTime(event.get_date_time()), event.get_name(), event.get_description()); 
             Events_Report.push_back(report);
         }
         ouput = Summary(channel_name, event_strings.size(), activeCounter, forcesCounter, Events_Report);
