@@ -1,8 +1,8 @@
 package bgu.spl.net.srv;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
-import bgu.spl.net.api.MessagingProtocol;
 import bgu.spl.net.api.StompMessagingProtocol;
+import bgu.spl.net.impl.stomp.StompFrame;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -57,6 +57,7 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     {
         try
         {
+            System.out.println("sending the following message:\n----\n"+((StompFrame)msg).toString()+"\n----");
             out.write(encdec.encode(msg));
             out.flush();
         }
