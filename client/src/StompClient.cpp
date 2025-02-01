@@ -6,10 +6,10 @@ using namespace std;
 #include <string>
 #include <memory>
 #include <sstream>
-#include "ConnectionHandler.h"
+#include "../include/ConnectionHandler.h"
 #include "event.h"
-#include <StompFrame.h>
-#include <summary.h>
+#include "StompFrame.h"
+#include "summary.h"
 #include <fstream>
 #include <thread>
 
@@ -77,7 +77,6 @@ class StompClient
 
 	void clinetHandeler()
 	{
-		cout << "entered the ClientHandler" << endl;
 		string currentLine;
 		while(true)
 		{
@@ -108,7 +107,6 @@ class StompClient
 				else if(command == "report"){
 					if(tokens.size() != 2){
 						cout << "report command needs 1 arg: {file}" << endl ;
-						 
 					}
 					else report(tokens[1]);
 				}
@@ -139,7 +137,7 @@ class StompClient
 					}
 					else this->login(tokens[1], tokens[2], tokens[3]);
 				}
-				else if(command == "join" || command == "exit" || command == "report" || command == "summary"){
+				else if(command == "join" || command == "exit" || command == "report" || command == "summary" || command == "logout"){
 					cout << "The client is not logged in, log in before trying again" << endl ;
 				}
 				else{
@@ -219,14 +217,14 @@ class StompClient
 			string channel = event.get_channel_name();
 			event.setEventOwnerUser(currentUser);
 			string eventDescription = event.get_description();
-			/////DELETED INITIALIZATION OF THE MAP
+			
 			string message = "user:" + currentUser + "\n"
 						   + "city:" + event.get_city() + "\n"
 						   + "event name:" + event.get_name() + "\n"
 						   + "date time:" + to_string(event.get_date_time()) + "\n" 
 						   + "general information:\n" 
 						   + "    active:" + event.get_general_information().at("active") + "\n"
-						   + "    forces arrival at scene:" + event.get_general_information().at("") + "\n";
+						   + "    forces arrival at scene:" + event.get_general_information().at("forces_arrival_at_scene") + "\n";
 			StompFrame messageFrame("SEND",{{"destination",channel}},{message});
 			string stringMessage = messageFrame.toString();
 			if (!(connectionHandler->sendLine(stringMessage))) {
@@ -236,7 +234,7 @@ class StompClient
 		}
 	}
 
-	void summary(const string& channel_name, const string& user, const string& file) {
+	void summary(const string& channel_name, const string& user, const string& file) { 
 		if (usersEventsByChannel.count(channel_name) == 0) {
 			cout << "There are no events in the channel" << endl;
 		} else {
@@ -246,7 +244,6 @@ class StompClient
 					std::vector<Event> events = usersEventsByChannel.at(channel_name).at(user);
 					Summary summary = createSummary(events, channel_name);
 					std::ofstream out(file);
-
 					if (!out.is_open()) {
 						cout << "Could not open file" << endl;
 						return;
@@ -297,7 +294,38 @@ class StompClient
 
 	void readHandeler()
 	{
-		cout << "entered the readHandeler" << endl;
+
+		if(!isConnected)
+		{
+			string receivedMessage;
+			if(!(connectionHandler->getLine(receivedMessage)))
+			{
+				cout << "Could not connect to server" << endl;
+				close();
+				return;
+			}else{
+				StompFrame message(receivedMessage);
+				if(message.getStompCommand()=="CONNECTED"|| message.getStompCommand()=="ERROR" || message.getStompCommand()=="RECEIPT")
+					cout<< "recieved this message from the server: \n----\n" << message.toString() << "\n----" <<endl;
+				if(message.getStompCommand() == "CONNECTED")
+				{
+					cout << "Login successful" << endl;
+					isConnected = true;
+				}
+				else if (message.getStompCommand() == "ERROR")
+				{
+					for(auto header : message.getHeaders())
+					{
+						if(header.first == "message"){
+							cout << "Error: " << header.second << endl;
+						}
+					}
+				}
+				
+			}
+		}
+
+	
 		while(isConnected)
 		{
 			string receivedMessage;
@@ -310,6 +338,8 @@ class StompClient
 			else
 			{
 				StompFrame message(receivedMessage);
+				if(message.getStompCommand()=="CONNECTED"|| message.getStompCommand()=="ERROR" || message.getStompCommand()=="RECEIPT" || message.getStompCommand()=="MESSAGE")
+					cout<< "recieved this message from the server: \n----\n" << message.toString() << "\n----" <<endl;
 				if(message.getStompCommand() == "CONNECTED")
 				{
 					cout << "Login successful" << endl;
@@ -347,7 +377,6 @@ class StompClient
 					}
 					else if (words[0] == "logout")
 					{
-						connectionHandler->close();
 						cout << "logout done" << endl;
 						close();
 					}
@@ -410,6 +439,10 @@ class StompClient
 
 	void close()
 	{
+		connectionHandler->close();
+		delete connectionHandler;
+		connectionHandler = nullptr;
+
 		isConnected = false;
 		subscriptionByChannel.clear();
 		subscriptionByID.clear();
@@ -457,7 +490,6 @@ class StompClient
 
 int main(int argc, char *argv[]) 
 {
-	cout << "entered main" << endl;
 	StompClient stompClient;
 	stompClient.clinetHandeler();
 	return 0;
