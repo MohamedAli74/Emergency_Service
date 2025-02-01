@@ -22,8 +22,7 @@ public class Connectionsimpl<T> implements Connections<T>
         this.stompServer = stompServer;
     }
 
-    public String connect(String acceptVersion,String host,String name,String passCode,ConnectionHandler<T> connectionHandler)
-    {
+    public String connect(String acceptVersion,String host,String name,String passCode,ConnectionHandler<T> connectionHandler){   
         String outPut = "";
         int result = 0;
         if (passCode == null) 
@@ -80,9 +79,7 @@ public class Connectionsimpl<T> implements Connections<T>
         handelrsById.put(id.get(), connectionHandler);
         return id.get();
     }
-    public String subscribe(int connectionId, String destination, int subscriptionID)
-    {
-        destination = "/" + destination;
+    public String subscribe(int connectionId, String destination, int subscriptionID){
         String outPut = "";
         if (subscriptionID == -1) 
         {
@@ -176,6 +173,7 @@ public class Connectionsimpl<T> implements Connections<T>
             ConcurrentHashMap<Integer,ConnectionHandler> subscribers = stompServer.getChannelsSubscribers().get(channel);
 
             if(!subscribers.containsKey(stompServer.getUserSubscribesByChannel().get(senderId).get(channel))){
+
                 outPut = "the sender is not subscribed to the desired channel";
             }
             else{
