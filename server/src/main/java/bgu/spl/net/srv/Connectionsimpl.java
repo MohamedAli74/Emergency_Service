@@ -171,7 +171,7 @@ public class Connectionsimpl<T> implements Connections<T>
         else
         {
             ConcurrentHashMap<String ,ConnectionHandler> subscribers = stompServer.getChannelsSubscribers().get(channel);
-            if(stompServer.getChannelsSubscribers().get(senderId)==null){
+            if(stompServer.getUserSubscribesByChannel().get(senderId)==null){
                 outPut = "the sender is not subscribed to the desired channel";
             }
 

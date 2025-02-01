@@ -1,5 +1,5 @@
 {
-    "channel_name": "police",
+    "channel_name": "ambulance",
     "events": [
         {
             "event_name": "Shoplifting",

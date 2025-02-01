@@ -47,7 +47,7 @@
     	std::string epochToDateTime(int epoch) {
 		time_t time = epoch;
 		struct tm *timeinfo;
-		timeinfo = localtime(&time);
+		timeinfo = gmtime(&time);
 		char buffer[80];
 		strftime(buffer, 80, "%d/%m/%y_%H:%M", timeinfo);
 		return buffer;
