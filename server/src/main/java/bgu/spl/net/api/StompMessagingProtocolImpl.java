@@ -21,13 +21,19 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
     }
 
     public void process(StompFrame message){
-
-
+        if(message.getStompCommand().equals("CONNECT") ||
+            message.getStompCommand().equals("SUBSCRIBE") ||
+            message.getStompCommand().equals("UNSUBSCRIBE") ||
+            message.getStompCommand().equals("SEND") ||
+            message.getStompCommand().equals("DISCONNECT"))
+            
+            System.out.println("Processing message:\n----\n"+message.toString()+"\n----");
 
         if(message.getStompCommand().equals("DISCONNECT")){
             if(!message.getHeaders()[0][0].equals("receipt")){
                 sendError(message, "the receipt header is missing/misswritten", message.getHeaders()[0][1]);
             }else{
+                System.out.println("connectionHandler is: " + this.toString().substring( this.toString().indexOf('@') , this.toString().length()));
                 shouldTerminate=true;
                 sendReceipt(message.getHeaders()[0][1]);
                 connections.disconnect(ownersConnectionID);
@@ -72,9 +78,9 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
                 if(header[0] .equals("receipt"))receipt = header[1];
                 if(header[0] .equals("destination"))destination = header[1];
             }
-            
             String[][] headers = {{"subscription",ownersConnectionID.toString()},{"message-id" , connections.generateMessageID().toString()},{"destination" , destination}};
-            StompFrame msg = new StompFrame("MESSAGE", headers, message.getFrameBody());
+            String FrameBody = RemoveExtraLinesFromFrameBody(message.getFrameBody());
+            StompFrame msg = new StompFrame("MESSAGE", headers, FrameBody);
             String response = connections.send(destination,msg,ownersConnectionID);
             
             if(!response.equals("true")){
@@ -83,7 +89,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
             if(receipt!=null && response.equals("true"))sendReceipt(receipt);
         }
         if(message.getStompCommand().equals("CONNECT")){
-            System.out.println("login detected");
             String userName = null ;
             String passCode = null ;
             String host = null ;
@@ -96,15 +101,13 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
                 if(header[0] .equals("passcode"))passCode = header[1];
                 if(header[0] .equals("login"))userName = header[1];
                 if(header[0] .equals("receipt"))receipt = header[1];
-                System.out.println(acceptVersion + " " + host + " " + passCode + " " + userName + " " + receipt);
             }
             String response  = connections.connect(acceptVersion,host,userName,passCode,connectionHandler);
             if(!(response.substring(0, 4)).equals("true")){
-                System.out.println(message.toString());
                 sendError(message, response, receipt);
             }else{
                 start(Integer.parseInt(response.substring(4, response.length())),connections);
-                StompFrame connected = new StompFrame("CONNECTED", new String[][]{{"version" , acceptVersion}} , null);
+                StompFrame connected = new StompFrame("CONNECTED", new String[][]{{"version" , acceptVersion}} , "");
 
                 connections.send(ownersConnectionID, connected);
                 if(receipt!=null)sendReceipt(receipt);
@@ -134,13 +137,11 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
                      "The message:\n----\n"+FaultyFrame.toString()+"\n----"
         );
         
-        
-        //in the case of logging out then trying to login with false info
-        //(thus needing to send an error) we can't send the error to the disconnected user 
-
-        System.out.println(error.toString());
         if(ownersConnectionID!=null)
             connections.send(ownersConnectionID, error);
+        else{    
+            connectionHandler.send(error);
+        }
     }
 
     @Override
@@ -150,5 +151,17 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
 
     public void setConnectionHandler(ConnectionHandler connectionHandler){
         this.connectionHandler = connectionHandler;
+    }
+    
+    private String RemoveExtraLinesFromFrameBody(String frameBody){
+        String[] lines = frameBody.split("\n");
+        String newFrameBody = "";
+        for(String line : lines){
+            if(!line.equals("")){
+                System.out.println("adding this line to frame body: " + line);
+                newFrameBody = newFrameBody + line + "\n";
+            }
+        }
+        return newFrameBody;
     }
 }
