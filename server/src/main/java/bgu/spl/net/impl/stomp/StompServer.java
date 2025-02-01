@@ -6,7 +6,7 @@ import bgu.spl.net.api.*;
 
 public class StompServer 
 {
-    private ConcurrentHashMap<String, ConcurrentHashMap<Integer,ConnectionHandler>> channelsSubscribers = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, ConcurrentHashMap<String,ConnectionHandler>> channelsSubscribers = new ConcurrentHashMap<>();
     private ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> userSubscribesByChannel = new ConcurrentHashMap<>();
     private ConcurrentHashMap<Integer, ConcurrentHashMap<Integer, String>> userSubscribesByIdSub = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, String> passcodes = new ConcurrentHashMap<>();
@@ -20,7 +20,7 @@ public class StompServer
         this.server = server;
     }
     // Getter for channelsSubscribers
-    public ConcurrentHashMap<String, ConcurrentHashMap<Integer, ConnectionHandler>> getChannelsSubscribers() {
+    public ConcurrentHashMap<String, ConcurrentHashMap<String, ConnectionHandler>> getChannelsSubscribers() {
         return channelsSubscribers;
     }
 

@@ -118,7 +118,7 @@ public class Connectionsimpl<T> implements Connections<T>
         {
             stompServer.getUserSubscribesByChannel().get(connectionId).put(destination, subscriptionID);
             stompServer.getUserSubscribesByIdSub().get(connectionId).put(subscriptionID, destination);
-            stompServer.getChannelsSubscribers().get(destination).put(subscriptionID,handelrsById.get(connectionId));     
+            stompServer.getChannelsSubscribers().get(destination).put(connectionId + ":" + subscriptionID,handelrsById.get(connectionId));     
             outPut = "true";
         }
         return outPut;
@@ -140,7 +140,7 @@ public class Connectionsimpl<T> implements Connections<T>
         if (outPut.equals("")) 
         {
             stompServer.getUserSubscribesByIdSub().get(connectionId).remove(subscriptionID);
-            stompServer.getChannelsSubscribers().get(destination).remove(subscriptionID);
+            stompServer.getChannelsSubscribers().get(destination).remove(connectionId + ":" + subscriptionID);
             stompServer.getUserSubscribesByChannel().get(connectionId).remove(destination);
             outPut = "true";
         }
@@ -170,15 +170,14 @@ public class Connectionsimpl<T> implements Connections<T>
         }
         else
         {
-            ConcurrentHashMap<Integer,ConnectionHandler> subscribers = stompServer.getChannelsSubscribers().get(channel);
-
-            if(!subscribers.containsKey(stompServer.getUserSubscribesByChannel().get(senderId).get(channel))){
+            ConcurrentHashMap<String ,ConnectionHandler> subscribers = stompServer.getChannelsSubscribers().get(channel);
+            if(stompServer.getUserSubscribesByChannel().get(senderId).get(channel)== null){
 
                 outPut = "the sender is not subscribed to the desired channel";
             }
             else{
-                for (ConnectionHandler connectionHandler : subscribers.values()) {
-                connectionHandler.send(msg);    
+                for(ConnectionHandler connectionHandler : subscribers.values()) {
+                    connectionHandler.send(msg);    
             }
             outPut = "true";
             }
@@ -186,12 +185,15 @@ public class Connectionsimpl<T> implements Connections<T>
         return outPut;
     }
     
+
+
+
     public void disconnect(int connectionId)
     {  
         if(stompServer.getUserSubscribesByChannel().get(connectionId)!=null){
         for (String channel : stompServer.getUserSubscribesByChannel().get(connectionId).keySet()) 
         {
-            stompServer.getChannelsSubscribers().get(channel).remove(stompServer.getUserSubscribesByChannel().get(connectionId).get(channel));
+            stompServer.getChannelsSubscribers().get(channel).remove(connectionId + ":" + stompServer.getUserSubscribesByChannel().get(connectionId).get(channel));
         }
         stompServer.getUserSubscribesByChannel().remove(connectionId);
         stompServer.getUserSubscribesByIdSub().remove(connectionId);
@@ -226,3 +228,4 @@ public class Connectionsimpl<T> implements Connections<T>
         return messageID.incrementAndGet();
     }
 }
+
