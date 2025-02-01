@@ -26,14 +26,13 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
             message.getStompCommand().equals("UNSUBSCRIBE") ||
             message.getStompCommand().equals("SEND") ||
             message.getStompCommand().equals("DISCONNECT"))
-            
+
             System.out.println("Processing message:\n----\n"+message.toString()+"\n----");
 
         if(message.getStompCommand().equals("DISCONNECT")){
             if(!message.getHeaders()[0][0].equals("receipt")){
                 sendError(message, "the receipt header is missing/misswritten", message.getHeaders()[0][1]);
             }else{
-                System.out.println("connectionHandler is: " + this.toString().substring( this.toString().indexOf('@') , this.toString().length()));
                 shouldTerminate=true;
                 sendReceipt(message.getHeaders()[0][1]);
                 connections.disconnect(ownersConnectionID);
@@ -158,7 +157,6 @@ public class StompMessagingProtocolImpl implements StompMessagingProtocol<StompF
         String newFrameBody = "";
         for(String line : lines){
             if(!line.equals("")){
-                System.out.println("adding this line to frame body: " + line);
                 newFrameBody = newFrameBody + line + "\n";
             }
         }
