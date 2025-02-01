@@ -9,9 +9,6 @@
 
     StompFrame::StompFrame(const std::string& stringMessage): stompCommand(""), headers(), frameBody("")  {
         std::vector<std::string> lines = convertTOtokensByLines(stringMessage);
-
-        std::cout << "in stompFrame Constructor" << std::endl;
-        
         stompCommand = lines[0];
         if(stompCommand == "CONNECTED"){
             std::string versionHeader = lines[1];
@@ -20,6 +17,9 @@
             frameBody = "";
         }else if(stompCommand == "MESSAGE"){
             for(size_t i = 1; i < lines.size(); i++){
+                if(lines[i] == "\0"){
+                    break;
+                }
                 std::string line = lines[i];
                 std::vector<std::string> words = convertTOtokensByWords(line);
                 if(words[0] == "subscription:")
@@ -32,16 +32,26 @@
             }
         }else if(stompCommand == "RECEIPT"){
             std::string receiptID = lines[1];
-            headers.push_back(std::make_pair("receipt-id", receiptID));
+            std::vector<std::string> words = convertTOtokensByWords(receiptID);
+            headers.push_back(std::make_pair("receipt-id", words[1]));
             frameBody = "";
         }else if(stompCommand == "ERROR"){
             for(size_t i = 1; i < lines.size(); i++){
+
+                if(lines[i] == "\0")
+                    break;
+
                 std::vector<std::string> words = convertTOtokensByWords(lines[i]);
-                if(words[0] == "message:")
-                    headers.push_back(std::make_pair("message", words[1]));
-                if(words[0] == "receipt-id:")
-                    headers.push_back(std::make_pair("receipt-id", words[1]));
-                else frameBody += lines[i] + "\n";
+                if(words[0] == "message:"){
+                    headers.push_back(std::make_pair("message", lines[i].substr(9, lines[i].length())));
+                }
+                else{ 
+                    if(words[0] == "receipt-id:")
+                        headers.push_back(std::make_pair("receipt-id", words[1]));
+                    else{ 
+                        frameBody += lines[i] + "\n";
+                    }
+                }
             }
         }
     }
