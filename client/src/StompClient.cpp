@@ -224,7 +224,9 @@ class StompClient
 						   + "date time:" + to_string(event.get_date_time()) + "\n" 
 						   + "general information:\n" 
 						   + "    active:" + event.get_general_information().at("active") + "\n"
-						   + "    forces arrival at scene:" + event.get_general_information().at("forces_arrival_at_scene") + "\n";
+						   + "    forces arrival at scene:" + event.get_general_information().at("forces_arrival_at_scene") + "\n"
+						   + "description:" + eventDescription;
+
 			StompFrame messageFrame("SEND",{{"destination",channel}},{message});
 			string stringMessage = messageFrame.toString();
 			if (!(connectionHandler->sendLine(stringMessage))) {
@@ -264,7 +266,7 @@ class StompClient
 						if(report.get_summary().length() > 27) {
 							report.set_summary(report.get_summary().substr(0, 27) + "...");
 						}
-						out << "Report_"+i+1 << endl;
+						out << "Report_" << i+1 << endl;
 						out << "City: " << report.get_city() << endl;
 						out << "Date time: " << report.get_date_time() << endl;
 						out << "Event name: " << report.get_event_name() << endl;
